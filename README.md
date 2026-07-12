@@ -20,7 +20,7 @@ export GITHUB_TOKEN=your_github_token_here
 $env:GITHUB_TOKEN="your_github_token_here"
 ```
 
-The agent will use GitHub Models (`openai/gpt-4o-mini` by default) through the rate-limited inference API. You can browse available models at [github.com/marketplace/models](https://github.com/marketplace/models).
+The agent will use GitHub Models (`openai/gpt-5.6-sol` by default) through the rate-limited inference API. You can browse available models at [github.com/marketplace/models](https://github.com/marketplace/models).
 
 ### Option B — OpenAI
 
@@ -34,7 +34,7 @@ export OPENAI_API_KEY=your_key_here
 $env:OPENAI_API_KEY="your_key_here"
 ```
 
-The agent will use `gpt-4.1-mini` by default.
+The agent will use `gpt-5.6-sol` by default.
 
 If both environment variables are set, `GITHUB_TOKEN` takes precedence.
 
