@@ -9,9 +9,9 @@ from typing import Any, Callable
 
 from openai import OpenAI
 
-DEFAULT_MODEL = "gpt-4.1-mini"
-DEFAULT_GITHUB_MODEL = "gpt-4o-mini"
-GITHUB_MODELS_ENDPOINT = "https://models.inference.ai.azure.com"
+DEFAULT_MODEL = "gpt-5.6-sol"
+DEFAULT_GITHUB_MODEL = "openai/gpt-5.6-sol"
+GITHUB_MODELS_ENDPOINT = "https://models.github.ai/inference"
 MAX_FILE_CHARS = 4096
 MAX_SEARCH_MATCHES = 200
 BASE_DIR = Path.cwd().resolve()
