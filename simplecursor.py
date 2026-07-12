@@ -10,10 +10,13 @@ from typing import Any, Callable
 from openai import OpenAI
 
 DEFAULT_MODEL = "gpt-4.1-mini"
+DEFAULT_GITHUB_MODEL = "gpt-4o-mini"
+GITHUB_MODELS_ENDPOINT = "https://models.inference.ai.azure.com"
 MAX_FILE_CHARS = 4096
 MAX_SEARCH_MATCHES = 200
 BASE_DIR = Path.cwd().resolve()
 CLIENT: OpenAI | None = None
+ACTIVE_MODEL: str = DEFAULT_MODEL
 
 SYSTEM_PROMPT = (
     "You are Cursor, a coding agent. Accomplish the user's task using the provided tools, "
@@ -245,9 +248,9 @@ def _assistant_message_payload(message: Any) -> dict[str, Any]:
     return payload
 
 
-def agent_loop(task: str, *, max_steps: int, verbose: bool, auto_approve: bool) -> None:
+def agent_loop(task: str, *, model: str, max_steps: int, verbose: bool, auto_approve: bool) -> None:
     if CLIENT is None:
-        raise RuntimeError("OpenAI client is not initialized")
+        raise RuntimeError("LLM client is not initialized")
 
     messages: list[dict[str, Any]] = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -265,7 +268,7 @@ def agent_loop(task: str, *, max_steps: int, verbose: bool, auto_approve: bool) 
             print(f"messages={len(messages)}")
 
         response = CLIENT.chat.completions.create(
-            model=DEFAULT_MODEL,
+            model=model,
             messages=messages,
             tools=TOOLS,
             tool_choice="auto",
@@ -306,28 +309,41 @@ def agent_loop(task: str, *, max_steps: int, verbose: bool, auto_approve: bool) 
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="SimpleCursor: minimal agentic coding assistant",
-        usage='python simplecursor.py "<task in plain English>" [--verbose] [--auto-approve] [--max-steps N]',
+        usage='python simplecursor.py "<task in plain English>" [--verbose] [--auto-approve] [--max-steps N] [--model MODEL]',
     )
     parser.add_argument("task", help="Task in plain English")
     parser.add_argument("--verbose", action="store_true", help="Print system prompt and message count")
     parser.add_argument("--auto-approve", action="store_true", help="Skip approval prompts")
     parser.add_argument("--max-steps", type=int, default=15, help="Maximum agent loop iterations")
+    parser.add_argument("--model", type=str, default=None, help="Model name to use (overrides the provider default)")
     args = parser.parse_args()
 
     if args.max_steps < 1:
         parser.error("--max-steps must be >= 1")
 
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
+    global CLIENT, ACTIVE_MODEL
+
+    github_token = os.getenv("GITHUB_TOKEN")
+    openai_key = os.getenv("OPENAI_API_KEY")
+
+    if github_token:
+        CLIENT = OpenAI(api_key=github_token, base_url=GITHUB_MODELS_ENDPOINT)
+        ACTIVE_MODEL = args.model or DEFAULT_GITHUB_MODEL
+    elif openai_key:
+        CLIENT = OpenAI(api_key=openai_key)
+        ACTIVE_MODEL = args.model or DEFAULT_MODEL
+    else:
         raise SystemExit(
-            "OPENAI_API_KEY is not set. Set it first, e.g. '\n"
-            "  bash: export OPENAI_API_KEY=...\n"
-            "  powershell: $env:OPENAI_API_KEY=...\n'"
+            "No API key found. Set one of the following:\n"
+            "  GitHub Models (GITHUB_TOKEN):\n"
+            "    bash:        export GITHUB_TOKEN=...\n"
+            "    powershell:  $env:GITHUB_TOKEN=...\n"
+            "  OpenAI (OPENAI_API_KEY):\n"
+            "    bash:        export OPENAI_API_KEY=...\n"
+            "    powershell:  $env:OPENAI_API_KEY=...\n"
         )
 
-    global CLIENT
-    CLIENT = OpenAI(api_key=api_key)
-    agent_loop(args.task, max_steps=args.max_steps, verbose=args.verbose, auto_approve=args.auto_approve)
+    agent_loop(args.task, model=ACTIVE_MODEL, max_steps=args.max_steps, verbose=args.verbose, auto_approve=args.auto_approve)
 
 
 if __name__ == "__main__":
