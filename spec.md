@@ -1,6 +1,6 @@
 # SimpleCursor — Build Spec (Implementation Brief)
 
-> **Audience: the coding agent implementing this.** Your task is to BUILD **SimpleCursor**, a ~300-line agentic coding assistant. Its purpose as an artifact is to make the core  concepts of Cursor-style agent mode **observable in its terminal output**. This document is the build contract: requirements, interfaces, and verification. Build to this spec and do not add scope beyond it.
+> **Audience: the coding agent implementing this.** Your task is to BUILD **SimpleCursor**, a ~350-line agentic coding assistant. Its purpose as an artifact is to make the core concepts of Cursor-style agent mode **observable in its terminal output**. This document is the build contract: requirements, interfaces, and verification. Build to this spec and do not add scope beyond it.
 
 ---
 
@@ -18,26 +18,25 @@ The artifact is a teaching aid, so the success metric is **clarity, not features
 
 - **Language:** Python 3.10+; use type hints throughout.
 - **Dependencies:** the Python standard library **plus one** LLM SDK, `openai`. No other third-party packages, no web framework, no database, no telemetry.
-- **Auth:** read the key from the `OPENAI_API_KEY` environment variable. If it is unset, exit immediately with a clear, actionable message.
-- **Model:** default to a current chat model that supports tool calling; store it in a single constant near the top of the file so it is trivial to change.
+- **Auth:** support GitHub Models through `GITHUB_TOKEN` and OpenAI through `OPENAI_API_KEY`. Prefer GitHub Models when both are set. If neither is set, exit immediately with a clear, actionable message.
+- **Model:** keep a tool-capable default model for each provider in constants near the top of the file. Allow a provider-compatible model ID to be selected with `--model`.
 - **Portability:** must run on Windows, macOS, and Linux. Use `pathlib`/`os.path` for paths; in `run_command`, note the `shell=True` injection risk in a comment.
 
 ---
 
 ## 3. Deliverables & Project Layout
 
-Produce exactly these files and nothing else:
+Produce these required runtime files:
 
 ```
-simplecursor.py       # the entire agent (~300 lines, single file)
+simplecursor.py       # the entire agent (~350 lines, single file)
 README.md             # setup + run instructions (see §10)
 requirements.txt      # a single line: openai
 sample/
     hello.py          # a tiny file the smoke test (§12) reads and edits
 ```
 
-Keep all logic in `simplecursor.py` so a reader can follow the whole system top to bottom.
-Do not introduce additional modules, packages, or config files.
+Supporting repository files such as `LICENSE` and this specification may also be present. Keep all runtime logic in `simplecursor.py` so a reader can follow the whole system top to bottom. Do not introduce additional runtime modules, packages, or config files.
 
 ---
 
@@ -100,7 +99,7 @@ DESTRUCTIVE: set[str]            # {"write_file", "run_command"}
 
 # Orchestration.
 def execute_tool(name: str, args: dict, auto_approve: bool) -> str: ...
-def agent_loop(task: str, *, max_steps: int, verbose: bool, auto_approve: bool) -> None: ...
+def agent_loop(task: str, *, model: str, max_steps: int, verbose: bool, auto_approve: bool) -> None: ...
 def main() -> None: ...           # arg parsing, env checks, entry point
 ```
 
@@ -140,7 +139,7 @@ Reference pseudocode (not final code):
 ```
 messages = [system_prompt, user_task]
 for step in 1..MAX_STEPS:
-    response = llm(messages, tools)
+    response = llm(model, messages, tools)
     append response to messages
     if response has no tool calls:
         print final content; stop
@@ -179,7 +178,7 @@ Reference draft (tune as needed):
 Expose exactly this interface (the README and the smoke test depend on it):
 
 ```
-python simplecursor.py "<task in plain English>" [--verbose] [--auto-approve] [--max-steps N]
+python simplecursor.py "<task in plain English>" [--verbose] [--auto-approve] [--max-steps N] [--model MODEL]
 ```
 
 | Argument | Required behavior |
@@ -188,9 +187,10 @@ python simplecursor.py "<task in plain English>" [--verbose] [--auto-approve] [-
 | `--verbose` | Print the system prompt at startup and the message count per turn. |
 | `--auto-approve` | Skip approval gates (used by the automated smoke test). |
 | `--max-steps N` | Override the loop bound (default 15). |
+| `--model MODEL` | Override the selected provider's default model. GitHub Models IDs use `publisher/model` format. |
 
-`README.md` must document: installing deps (`pip install -r requirements.txt`), setting
-`OPENAI_API_KEY` (show both bash `export` and PowerShell `$env:` forms), and one run example.
+`README.md` must document: installing deps (`pip install -r requirements.txt`), setting either
+`GITHUB_TOKEN` or `OPENAI_API_KEY` (show both bash `export` and PowerShell `$env:` forms), provider precedence, and one run example.
 
 ---
 
@@ -229,7 +229,7 @@ Also verify **without the network**:
 - `write_file`/`read_file` reject a path outside the CWD.
 - The approval gate returns `"user denied this action"` on any non-`y` input.
 
-If no API key is available in the build environment, still run the non-network checks and document how to run the full smoke test.
+If neither API credential is available in the build environment, still run the non-network checks and document how to run the full smoke test.
 
 ---
 
@@ -240,25 +240,25 @@ If no API key is available in the build environment, still run the non-network c
 - [ ] Every tool call is printed before execution.
 - [ ] Destructive actions are gated by approval; a denial does not crash the loop.
 - [ ] File operations are confined to the working directory.
-- [ ] `simplecursor.py` stays within ~300 lines including comments.
+- [ ] `simplecursor.py` stays within ~350 lines including comments.
 - [ ] All five concepts in §4 are demonstrable from stdout.
 
 ---
 
 ## 14. Line Budget (guidance)
 
-Approximate allocation for the ~300-line target; adjust but stay close.
+Approximate allocation for the ~350-line target; adjust but stay close.
 
 | Component | ~Lines | Responsibility |
 |-----------|:------:|----------------|
-| Tool schemas (JSON) | 60 | Describe available actions to the model |
-| Tool implementations | 70 | `read_file`, `write_file`, `list_dir`, `search`, `run_command` |
-| Agent loop | 40 | Orchestrate act → observe → repeat |
-| System prompt | 20 | Shape behavior and stopping rules |
-| Approval + output formatting | 50 | Safety gate + visible trace |
-| CLI / arg parsing / glue | 30 | Entry point, flags, provider setup |
-| Comments / docstrings | 30 | Inline explanation |
-| **Total** | **~300** | |
+| Tool schemas (JSON) | 90 | Describe available actions to the model |
+| Tool implementations | 90 | `read_file`, `write_file`, `list_dir`, `search`, `run_command` |
+| Agent loop | 55 | Orchestrate act → observe → repeat |
+| System prompt | 15 | Shape behavior and stopping rules |
+| Approval + output formatting | 35 | Safety gate + visible trace |
+| CLI / arg parsing / glue | 50 | Entry point, flags, provider setup |
+| Comments / docstrings | 15 | Inline explanation |
+| **Total** | **~350** | |
 
 ---
 
@@ -271,6 +271,6 @@ production tool adds":
 - Diff/patch-based edits instead of whole-file writes.
 - Codebase indexing / embeddings retrieval.
 - Retries and error recovery on API or tool failures.
-- Multi-provider abstraction and model-selection UI.
-- Parallel tool calls, persistence, auth, telemetry.
+- Additional provider plug-in architecture and interactive model-selection UI.
+- Parallel tool execution, persistence, managed credential storage, telemetry.
 - Editing outside the working directory.

@@ -8,9 +8,9 @@ SimpleCursor is a tiny single-file coding agent that demonstrates agent loops, t
 pip install -r requirements.txt
 ```
 
-### Option A — GitHub Models (recommended, free with a GitHub account)
+### Option A — GitHub Models (recommended for the demo)
 
-Set your GitHub personal access token:
+Create a fine-grained GitHub personal access token with `models:read` permission, then set it in your environment:
 
 ```bash
 export GITHUB_TOKEN=your_github_token_here
@@ -20,7 +20,7 @@ export GITHUB_TOKEN=your_github_token_here
 $env:GITHUB_TOKEN="your_github_token_here"
 ```
 
-The agent will use GitHub Models (`gpt-4o-mini` by default). You can browse available models at [github.com/marketplace/models](https://github.com/marketplace/models).
+The agent will use GitHub Models (`openai/gpt-4o-mini` by default) through the rate-limited inference API. You can browse available models at [github.com/marketplace/models](https://github.com/marketplace/models).
 
 ### Option B — OpenAI
 
@@ -35,6 +35,8 @@ $env:OPENAI_API_KEY="your_key_here"
 ```
 
 The agent will use `gpt-4.1-mini` by default.
+
+If both environment variables are set, `GITHUB_TOKEN` takes precedence.
 
 ## Run
 
@@ -54,7 +56,7 @@ python simplecursor.py "<task in plain English>" [--verbose] [--auto-approve] [-
 | `--verbose` | Print system prompt and message count per step |
 | `--auto-approve` | Skip approval prompts (used by automated smoke tests) |
 | `--max-steps N` | Override the loop bound (default 15) |
-| `--model MODEL` | Override the model name (e.g. `--model gpt-4o` or `--model Meta-Llama-3.1-70B-Instruct`) |
+| `--model MODEL` | Override the selected provider's model (e.g. `gpt-4.1-mini` for OpenAI or `openai/gpt-4o-mini` for GitHub Models) |
 
 ## Smoke test command
 
@@ -68,5 +70,5 @@ python simplecursor.py --auto-approve "Add a greet(name) function to sample/hell
 - Diff/patch-based edits
 - Codebase indexing/embeddings
 - API retry/recovery logic
-- Parallel tool calls, persistence, auth, telemetry
+- Parallel tool execution, persistence, managed credential storage, telemetry
 - Editing outside the working directory
