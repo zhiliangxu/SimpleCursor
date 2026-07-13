@@ -19,7 +19,7 @@ The artifact is a teaching aid, so the success metric is **clarity, not features
 - **Language:** Python 3.10+; use type hints throughout.
 - **Dependencies:** the Python standard library **plus one** LLM SDK, `openai`. No other third-party packages, no web framework, no database, no telemetry.
 - **Auth:** support GitHub Models through `GITHUB_TOKEN` and OpenAI through `OPENAI_API_KEY`. Prefer GitHub Models when both are set. If neither is set, exit immediately with a clear, actionable message.
-- **Model:** keep a tool-capable default model for each provider in constants near the top of the file. Allow a provider-compatible model ID to be selected with `--model`.
+- **Model:** default to `gpt-5` for OpenAI and `openai/gpt-5` for GitHub Models, keeping both values in constants near the top of the file. Allow a provider-compatible model ID to be selected with `--model`.
 - **Portability:** must run on Windows, macOS, and Linux. Use `pathlib`/`os.path` for paths; in `run_command`, note the `shell=True` injection risk in a comment.
 
 ---

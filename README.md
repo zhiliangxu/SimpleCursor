@@ -20,7 +20,7 @@ export GITHUB_TOKEN=your_github_token_here
 $env:GITHUB_TOKEN="your_github_token_here"
 ```
 
-The agent will use GitHub Models (`openai/gpt-5.6-sol` by default) through the rate-limited inference API. You can browse available models at [github.com/marketplace/models](https://github.com/marketplace/models).
+The agent will use GitHub Models (`openai/gpt-5` by default) through the rate-limited inference API. You can browse available models at [github.com/marketplace/models](https://github.com/marketplace/models).
 
 ### Option B — OpenAI
 
@@ -34,7 +34,7 @@ export OPENAI_API_KEY=your_key_here
 $env:OPENAI_API_KEY="your_key_here"
 ```
 
-The agent will use `gpt-5.6-sol` by default.
+The agent will use `gpt-5` by default.
 
 If both environment variables are set, `GITHUB_TOKEN` takes precedence.
 
@@ -56,7 +56,7 @@ python simplecursor.py "<task in plain English>" [--verbose] [--auto-approve] [-
 | `--verbose` | Print system prompt and message count per step |
 | `--auto-approve` | Skip approval prompts (used by automated smoke tests) |
 | `--max-steps N` | Override the loop bound (default 15) |
-| `--model MODEL` | Override the selected provider's model (e.g. `gpt-4.1-mini` for OpenAI or `openai/gpt-4o-mini` for GitHub Models) |
+| `--model MODEL` | Override the selected provider's model (e.g. `gpt-5` for OpenAI or `openai/gpt-5` for GitHub Models) |
 
 ## Smoke test command
 
