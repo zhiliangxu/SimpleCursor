@@ -154,7 +154,7 @@ Requirements:
 - `max_steps` defaults to 15; if exceeded, stop and print a clear notice (guards against runaway loops).
 - Every tool call is echoed **before** execution.
 - The final turn (a response with no tool calls) is printed as the summary to the user.
-- With `--verbose`, also print the system prompt once at startup and the running message count each turn.
+- With `--verbose`, also print the system prompt once at startup and each newly added message body once.
 
 ---
 
@@ -184,7 +184,7 @@ python simplecursor.py "<task in plain English>" [--verbose] [--auto-approve] [-
 | Argument | Required behavior |
 |----------|-------------------|
 | `<task>` (positional) | The task string. Required; error clearly if missing. |
-| `--verbose` | Print the system prompt at startup and the message count per turn. |
+| `--verbose` | Print the system prompt at startup and each newly added message body once. |
 | `--auto-approve` | Skip approval gates (used by the automated smoke test). |
 | `--max-steps N` | Override the loop bound (default 15). |
 | `--model MODEL` | Override the selected provider's default model. GitHub Models IDs use `publisher/model` format. |

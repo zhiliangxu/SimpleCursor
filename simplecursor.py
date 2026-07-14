@@ -248,6 +248,11 @@ def _assistant_message_payload(message: Any) -> dict[str, Any]:
     return payload
 
 
+def _print_message(message: dict[str, Any]) -> None:
+    print(f"{message['role'].capitalize()} message:")
+    print(json.dumps(message, indent=2))
+
+
 def agent_loop(task: str, *, model: str, max_steps: int, verbose: bool, auto_approve: bool) -> None:
     if CLIENT is None:
         raise RuntimeError("LLM client is not initialized")
@@ -261,11 +266,10 @@ def agent_loop(task: str, *, model: str, max_steps: int, verbose: bool, auto_app
         print("System prompt:")
         print(SYSTEM_PROMPT)
         print("-" * 60)
+        _print_message(messages[1])
 
     for step in range(1, max_steps + 1):
         print(f"Step {step}")
-        if verbose:
-            print(f"messages={len(messages)}")
 
         response = CLIENT.chat.completions.create(
             model=model,
@@ -274,7 +278,8 @@ def agent_loop(task: str, *, model: str, max_steps: int, verbose: bool, auto_app
             tool_choice="auto",
         )
         message = response.choices[0].message
-        messages.append(_assistant_message_payload(message))
+        assistant_message = _assistant_message_payload(message)
+        messages.append(assistant_message)
 
         tool_calls = message.tool_calls or []
         if not tool_calls:
@@ -282,6 +287,9 @@ def agent_loop(task: str, *, model: str, max_steps: int, verbose: bool, auto_app
             print("Final summary:")
             print(final_text)
             return
+
+        if verbose:
+            _print_message(assistant_message)
 
         for call in tool_calls:
             raw_args = call.function.arguments or "{}"
@@ -294,14 +302,15 @@ def agent_loop(task: str, *, model: str, max_steps: int, verbose: bool, auto_app
                 parsed_args = {}
 
             result = execute_tool(call.function.name, parsed_args, auto_approve)
-            messages.append(
-                {
-                    "role": "tool",
-                    "tool_call_id": call.id,
-                    "name": call.function.name,
-                    "content": result,
-                }
-            )
+            tool_message = {
+                "role": "tool",
+                "tool_call_id": call.id,
+                "name": call.function.name,
+                "content": result,
+            }
+            messages.append(tool_message)
+            if verbose:
+                _print_message(tool_message)
 
     print(f"Stopped after reaching max steps ({max_steps}).")
 
@@ -312,7 +321,7 @@ def main() -> None:
         usage='python simplecursor.py "<task in plain English>" [--verbose] [--auto-approve] [--max-steps N] [--model MODEL]',
     )
     parser.add_argument("task", help="Task in plain English")
-    parser.add_argument("--verbose", action="store_true", help="Print system prompt and message count")
+    parser.add_argument("--verbose", action="store_true", help="Print system prompt and new message bodies")
     parser.add_argument("--auto-approve", action="store_true", help="Skip approval prompts")
     parser.add_argument("--max-steps", type=int, default=15, help="Maximum agent loop iterations")
     parser.add_argument("--model", type=str, default=None, help="Model name to use (overrides the provider default)")
