@@ -53,7 +53,7 @@ python simplecursor.py "<task in plain English>" [--verbose] [--auto-approve] [-
 | Argument | Description |
 |----------|-------------|
 | `<task>` | Task in plain English (required) |
-| `--verbose` | Print system prompt and message count per step |
+| `--verbose` | Print the system prompt and each new message body |
 | `--auto-approve` | Skip approval prompts (used by automated smoke tests) |
 | `--max-steps N` | Override the loop bound (default 15) |
 | `--model MODEL` | Override the selected provider's model (e.g. `gpt-5` for OpenAI or `openai/gpt-5` for GitHub Models) |
